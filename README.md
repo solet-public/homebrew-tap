@@ -158,9 +158,19 @@ preview:
 4. If the server stops answering, `~/.lmstudio/bin/lms server start` again;
    with the desktop app, quit and reopen it first.
 
-5. Re-run the preview. The two decisions now list candidates. Approve with the
-   discovered ids, choosing the `-embedding` suffixed nomic entry, for
-   example:
+5. Load both models so the server reports them, then re-run the preview:
+
+   ```console
+   ~/.lmstudio/bin/lms load text-embedding-nomic-embed-text-v1.5-embedding --yes
+   ~/.lmstudio/bin/lms load qwen3-14b --context-length 8192 --yes
+   ```
+
+   LM Studio derives the served ids from the download sources, so the two
+   ids are `text-embedding-nomic-embed-text-v1.5-embedding` and `qwen3-14b`.
+   Leave GPU offload at its default on a Mac; add `--gpu off` only inside a
+   virtual machine with no GPU. The two decisions now list candidates.
+   Approve with the discovered ids, choosing the `-embedding` suffixed nomic
+   entry, for example:
 
    ```console
    solet create <name> --dry-run --json
@@ -169,6 +179,18 @@ preview:
      --decision inference_model=<id from candidates>
    solet create <name> --yes --approval-fingerprint <sha256 from that preview> --json
    ```
+
+   **Status as of 2026-09-08 13:30 UTC.** The embedding decision has been
+   verified end to end on a clean 24 GB machine with exactly these steps. The
+   inference decision has not. `qwen3-14b` loads and answers, but it is a
+   reasoning model that thinks before it replies, and the manager's
+   qualification probe currently reports `decision_qualification_failed`
+   with zero permitted candidates for `inference_model`. This is being
+   treated as a manager defect and is under investigation; expect either a
+   hand-fix line here or an updated release. Until then a fresh
+   `solet create` stops at the models stage even with both models installed
+   and loaded. Do not substitute a different inference model to get past it;
+   a solet created that way would not match its seed.
 
 6. Make the server come back after a reboot. In LM Studio, open Settings and
    turn on the option that runs the local server (headless service) at login;
@@ -274,6 +296,13 @@ Stated here so nobody discovers them the hard way:
 
 - The `models` stage needs LM Studio and both models provisioned by hand
   (above). Automating that is the next manager change.
+- The inference model does not yet pass the manager's qualification probe
+  (`decision_qualification_failed`, zero permitted candidates for
+  `inference_model`) even when `qwen3-14b` is loaded and answering, because
+  it is a reasoning model and the probe does not budget for its thinking
+  tokens. Measured 2026-09-08 on a clean 24 GB machine; under investigation.
+  Until it is fixed a fresh install stops at the models stage after the
+  embedding decision is accepted.
 - Nothing yet makes LM Studio's server start at login; the solet's own
   LaunchAgent does, so after a reboot the solet is up before its models are.
 - Stages after `models` have had less clean-machine coverage than the ones
