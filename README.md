@@ -180,17 +180,18 @@ preview:
    solet create <name> --yes --approval-fingerprint <sha256 from that preview> --json
    ```
 
-   **Status as of 2026-09-08 13:30 UTC.** The embedding decision has been
+   **Status as of 2026-09-08 13:50 UTC.** The embedding decision has been
    verified end to end on a clean 24 GB machine with exactly these steps. The
-   inference decision has not. `qwen3-14b` loads and answers, but it is a
-   reasoning model that thinks before it replies, and the manager's
-   qualification probe currently reports `decision_qualification_failed`
-   with zero permitted candidates for `inference_model`. This is being
-   treated as a manager defect and is under investigation; expect either a
-   hand-fix line here or an updated release. Until then a fresh
-   `solet create` stops at the models stage even with both models installed
-   and loaded. Do not substitute a different inference model to get past it;
-   a solet created that way would not match its seed.
+   inference decision is marginal. `qwen3-14b` answers the manager's
+   qualification request correctly, but it is a reasoning model that thinks
+   before it replies, and the probe gives it 20 seconds. On a machine without
+   GPU acceleration the answer lands at 19 to 20 seconds, so the probe can
+   fail with `decision_qualification_failed` and zero permitted candidates
+   for `inference_model`. A Mac with Apple Silicon is expected to answer well
+   inside the limit, but that has not been measured yet. If you see that
+   error with both models loaded, this is the cause: the models are fine and
+   the manager fix is in progress. Do not substitute a different inference
+   model to get past it; a solet created that way would not match its seed.
 
 6. Make the server come back after a reboot. In LM Studio, open Settings and
    turn on the option that runs the local server (headless service) at login;
@@ -296,13 +297,13 @@ Stated here so nobody discovers them the hard way:
 
 - The `models` stage needs LM Studio and both models provisioned by hand
   (above). Automating that is the next manager change.
-- The inference model does not yet pass the manager's qualification probe
+- The inference qualification probe has a 20 second timeout, and `qwen3-14b`
+  spends most of that reasoning before it answers. On a machine without GPU
+  acceleration the answer arrives at 19 to 20 seconds and the probe can fail
   (`decision_qualification_failed`, zero permitted candidates for
-  `inference_model`) even when `qwen3-14b` is loaded and answering, because
-  it is a reasoning model and the probe does not budget for its thinking
-  tokens. Measured 2026-09-08 on a clean 24 GB machine; under investigation.
-  Until it is fixed a fresh install stops at the models stage after the
-  embedding decision is accepted.
+  `inference_model`) with the model loaded and correct. Measured 2026-09-08
+  on a clean 24 GB virtual machine; Apple Silicon with Metal is expected to
+  pass but is unmeasured. The manager fix is in progress.
 - Nothing yet makes LM Studio's server start at login; the solet's own
   LaunchAgent does, so after a reboot the solet is up before its models are.
 - Stages after `models` have had less clean-machine coverage than the ones
