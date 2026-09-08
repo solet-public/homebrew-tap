@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "repository": "https://github.com/solet-public/macos-bizops.git",
+  "release_tag": "release-2026-09-08",
+  "commit": "9f3cfa3df57c197e68f541ffad4dd4d14192f953",
+  "tree_hash": "2a15d42d26584ef74a9439be73f1c39dbfa02a35",
+  "archive_sha256": "be97927511b44389baabb6a389203597899133f56c0bcd8410ae0f0d81b6945a",
+  "profile": "macos-bizops"
+}
