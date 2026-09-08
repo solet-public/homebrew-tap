@@ -212,6 +212,16 @@ solet doctor <name> --json       # the installation acceptance checks
 solet list --json                # every instance the manager created
 ```
 
+**If a stage blocks and you want to change a decision** (for example turn
+`autostart` off after the LaunchAgent step refused), this release cannot do
+it on the same instance name. Re-running `solet create <name>` with different
+inputs returns `state_conflict` ("requested inputs differ from the retained
+transaction"), and the repair text mentions abandoning the transaction, but
+no abandon command exists yet (measured 2026-09-08; tracked as a manager
+defect). Create the instance again under a **new name** with the inputs you
+want; the host-level provisioning (Homebrew, PostgreSQL, LM Studio, models)
+is reused, and the blocked instance directory can be removed by hand later.
+
 Files worth looking at:
 
 - `~/Solets/<name>` is the instance. Its clone of the seed is there, with the
@@ -304,6 +314,14 @@ Stated here so nobody discovers them the hard way:
   `inference_model`) with the model loaded and correct. Measured 2026-09-08
   on a clean 24 GB virtual machine; Apple Silicon with Metal is expected to
   pass but is unmeasured. The manager fix is in progress.
+- The LaunchAgent step (`install_launchagent`) can refuse its own inputs with
+  `adapter_protocol_error` (measured 2026-09-08 on a clean machine; the
+  adapter's accepted input set lags the flow's declaration; fix in progress).
+  Choose `--no-autostart` on a fresh name and start the solet in the
+  foreground with the command the completion report prints.
+- A blocked `solet create` cannot be abandoned or have its decisions changed
+  on the same name (`state_conflict`; no abandon command exists yet). Use a
+  new name. Fix in design.
 - Nothing yet makes LM Studio's server start at login; the solet's own
   LaunchAgent does, so after a reboot the solet is up before its models are.
 - Stages after `models` have had less clean-machine coverage than the ones
