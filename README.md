@@ -40,6 +40,20 @@ manager. `solet create` is its own reviewed transaction: it previews every
 change it wants to make to your machine and to the new instance, then asks you
 to approve that exact plan. Do not join them with `&&`.
 
+**If Homebrew refuses with `Refusing to load formula solet-public/tap/solet
+from untrusted tap`**, that is Homebrew 6's third-party trust check, not a
+problem with the formula. Trust this one formula (not the whole tap) and run
+the install again:
+
+```console
+brew tap solet-public/tap
+brew trust --formula solet-public/tap/solet
+brew install solet-public/tap/solet
+```
+
+`brew trust --help` shows the current syntax if yours differs. Older Homebrew
+versions have no trust check and install directly.
+
 Pick `<name>` now and use it everywhere. Lowercase, starts with a letter,
 letters, digits, `-` and `_` only (`[a-z][a-z0-9_-]{1,62}`). Everything the
 solet becomes lives under `~/Solets/<name>`.
