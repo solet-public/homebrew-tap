@@ -3,10 +3,10 @@ class Solet < Formula
 
   desc "Create and operate local Solet instances"
   homepage "https://solet.ai"
-  url "https://github.com/solet-public/homebrew-tap/releases/download/manager-v0.1.0-r25/solet-0.1.0.tar.gz"
-  sha256 "be97927511b44389baabb6a389203597899133f56c0bcd8410ae0f0d81b6945a"
+  url "https://github.com/solet-public/homebrew-tap/releases/download/manager-v0.1.0-r39/solet-0.1.0.tar.gz"
+  sha256 "92f71b3418b904fa74fb5b30f93e8afcc9f43963188c755722f7310c776b86cd"
   license "Apache-2.0"
-  revision 24
+  revision 25
   depends_on "git"
   depends_on "python@3.13"
 
@@ -58,11 +58,22 @@ class Solet < Formula
       {
         "schema_version": 1,
         "repository": "https://github.com/solet-public/macos-bizops.git",
-        "release_tag": "release-2026-09-08",
-        "commit": "9f3cfa3df57c197e68f541ffad4dd4d14192f953",
-        "tree_hash": "2a15d42d26584ef74a9439be73f1c39dbfa02a35",
-        "archive_sha256": "be97927511b44389baabb6a389203597899133f56c0bcd8410ae0f0d81b6945a",
+        "release_tag": "release-2026-09-15-0551603bd674",
+        "commit": "fcf5865a4d8b447057ec3c6360d503f8a405723c",
+        "tree_hash": "7415f6b647781fe7a8cdf9ae325ed031d29ac9a7",
+        "archive_sha256": "92f71b3418b904fa74fb5b30f93e8afcc9f43963188c755722f7310c776b86cd",
         "profile": "macos-bizops"
+      }
+    JSON
+    # This installed receipt distinguishes a worktree-payload experiment from
+    # a published manager/seed pair.  It is deliberately independent of the
+    # seed lock: the latter authenticates the seed, while this records how the
+    # manager archive itself reached this keg.
+    (libexec/"share"/"solet"/"install-source.json").write <<~JSON
+      {
+        "schema_version": 1,
+        "mode": "release",
+        "source_commit": "0551603bd674410d0fed0e03c060883d9c1f9489"
       }
     JSON
     # `install_symlink` records a path, not bytes — safe for a source build,
@@ -99,6 +110,7 @@ class Solet < Formula
     assert_match '"status": "preview_ready"', preview
     assert_match '"dry_run_writes": 0', preview
     assert_path_exists libexec/"share"/"solet"/"seed.lock.json"
+    assert_path_exists libexec/"share"/"solet"/"install-source.json"
     assert_path_exists libexec/"share"/"solet"/"contracts"/"macos_setup_flow.json"
     refute_path_exists testpath/"Solets"/"brew-test"
   end
