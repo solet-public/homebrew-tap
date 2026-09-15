@@ -6,17 +6,17 @@ your own Mac, with its own PostgreSQL schema, memories, knowledge bases and
 plugins. This tap installs the **Solet Manager**, the command that creates and
 operates solet instances from the published seed.
 
-**Status (2026-09-15): the formula is published.** `brew install
-solet-public/tap/solet` installs manager release `manager-v0.1.0-r39`
-(`solet 0.1.0_25`), pinned to seed release `release-2026-09-15-0551603bd674`
-of `solet-public/macos-bizops`. This release fixes a cold-first-boot defect
-that could leave a fresh install never reaching an active router color
-inside its startup-readiness window (`iss_7f240dbe`, commit `0551603bd`);
-the fix is validated on a clean 24 GB virtual machine end to end through
-`solet doctor` and `solet` health, with a cold restart reaching active color
-in 1.145 seconds against a 120 second budget. The install path has been run
-end to end up to the point described under *Known gaps* below; read that
-section, and the *Reinstalling on a machine that had a solet* section below
+**Status (2026-09-15): r40 is published.** `brew install
+solet-public/tap/solet` installs manager release `manager-v0.1.0-r40`
+(`solet 0.1.0_26`), pinned to seed release
+`release-2026-09-15-da73ac6cc1e4` of `solet-public/macos-bizops` at source
+pin `da73ac6cc1e4106864293faa766b301d91c750ca`. r40 reports the actionable
+genesis diagnostic for an interrupted or inconsistent setup journal rather
+than collapsing it into `corrupt_state`, and verifies the persistent
+LaunchAgent plist as well as the live launchd service. The fresh-install path
+is validated end to end on a clean 24 GB virtual machine through `solet
+doctor` (24/24 required checks) and target-local bridge health. Read the
+*Known gaps* section below, and *Reinstalling on a machine that had a solet*
 if this is not the first solet you have created on this Mac.
 
 ## What you need
@@ -339,9 +339,24 @@ Stated here so nobody discovers them the hard way:
   deferred background work after the router registers (`iss_7f240dbe`,
   commit `0551603bd`). Measured on the r39 clean-guest validation run: 1.145
   seconds from LaunchAgent restart to active color.
+- **Fixed in r40:** genesis now preserves and reports the actionable
+  diagnostic when it sees an interrupted or inconsistent setup journal rather
+  than hiding it behind an opaque `corrupt_state` result. Existing stale vault
+  material still needs the reinstall sweep below; r40 makes that condition
+  diagnosable instead of pretending setup is irrecoverably corrupt.
+- **Fixed in r40:** autostart readiness now requires both a healthy launchd
+  service and its persistent plist on disk. A manually loaded service can no
+  longer be reported as reboot-ready when its plist was not persisted.
 - **Fixed:** the LaunchAgent step (`install_launchagent`) no longer refuses
   its own flow-declared inputs at the adapter gate (`adapter_protocol_error`
   is closed, `iss_d0f9e899`, commit `3f8774534`).
+- **Known install-time transient:** pgvector dependency reconciliation can
+  leave the `vector` database extension registered while the Homebrew
+  `pgvector` formula is absent (`iss_b7b01bcc`). The later knowledge-retrieval
+  probe then fails to load the vector library. Run `brew install pgvector`
+  and resume the same reviewed `solet create` transaction; do not drop or
+  recreate the database extension. This was recovered during r40 validation
+  and is tracked for a manager-side idempotence fix.
 - A blocked `solet create` still cannot be abandoned or have its decisions
   changed on the same name (`state_conflict`; no abandon command exists
   yet). Use a new name; see *Reinstalling on a machine that had a solet*
@@ -371,11 +386,12 @@ name can silently do the wrong thing rather than failing cleanly:
   `create` stops with `state_conflict` and no way to proceed under that name
   (`iss_6e520a72`).
 - If the login Keychain still has the old instance's vault entries, genesis
-  refuses to re-birth the name rather than overwrite them; the manager also
-  drops the failing command's own stderr, so the refusal can be hard to
-  diagnose from the JSON alone (`iss_74d70ef6`).
+  refuses to re-birth the name rather than overwrite them. r40 reports the
+  stale-vault diagnostic instead of collapsing it into `corrupt_state`, but
+  it does not delete a prior instance's Keychain material for you
+  (`iss_74d70ef6`).
 
-Updating an existing solet to r39 is round two, not this release. Until it
+Updating an existing solet to r40 is round two, not this release. Until it
 ships, treat any machine that has ever run `solet create <name>` (even a
 failed or abandoned attempt) as needing a clean sweep before you try that
 name again:
