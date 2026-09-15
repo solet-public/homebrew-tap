@@ -6,13 +6,18 @@ your own Mac, with its own PostgreSQL schema, memories, knowledge bases and
 plugins. This tap installs the **Solet Manager**, the command that creates and
 operates solet instances from the published seed.
 
-**Status (2026-09-08): the formula is published.** `brew install
-solet-public/tap/solet` installs manager release `manager-v0.1.0-r25`
-(`solet 0.1.0_24`), pinned to seed release `release-2026-09-08` of
-`solet-public/macos-bizops`. The install path has been run end to end on clean
-macOS virtual machines up to the point described under *Known gaps* below;
-read that section before you start so the one manual step does not surprise
-you.
+**Status (2026-09-15): the formula is published.** `brew install
+solet-public/tap/solet` installs manager release `manager-v0.1.0-r39`
+(`solet 0.1.0_25`), pinned to seed release `release-2026-09-15-0551603bd674`
+of `solet-public/macos-bizops`. This release fixes a cold-first-boot defect
+that could leave a fresh install never reaching an active router color
+inside its startup-readiness window (`iss_7f240dbe`, commit `0551603bd`);
+the fix is validated on a clean 24 GB virtual machine end to end through
+`solet doctor` and `solet` health, with a cold restart reaching active color
+in 1.145 seconds against a 120 second budget. The install path has been run
+end to end up to the point described under *Known gaps* below; read that
+section, and the *Reinstalling on a machine that had a solet* section below
+if this is not the first solet you have created on this Mac.
 
 ## What you need
 
@@ -305,34 +310,91 @@ integration and the `<name>` command-line client.
 
 Stated here so nobody discovers them the hard way:
 
-- The `models` stage needs LM Studio and both models provisioned by hand
-  (above). Automating that is the next manager change.
-- The inference qualification probe has a 20 second timeout, and `qwen3-14b`
-  spends most of that reasoning before it answers. On a machine without GPU
-  acceleration the answer arrives at 19 to 20 seconds and the probe can fail
-  (`decision_qualification_failed`, zero permitted candidates for
-  `inference_model`) with the model loaded and correct. Measured 2026-09-08
-  on a clean 24 GB virtual machine; Apple Silicon with Metal is expected to
-  pass but is unmeasured. The manager fix is in progress.
-- The LaunchAgent step (`install_launchagent`) can refuse its own inputs with
-  `adapter_protocol_error` (measured 2026-09-08 on a clean machine; the
-  adapter's accepted input set lags the flow's declaration; fix in progress).
-  Choose `--no-autostart` on a fresh name and start the solet in the
-  foreground with the command the completion report prints.
-- A blocked `solet create` cannot be abandoned or have its decisions changed
-  on the same name (`state_conflict`; no abandon command exists yet). Use a
-  new name. Fix in design.
+- **Largely fixed, not yet reflected in the walkthrough above.** The manager
+  now provisions LM Studio itself when your `solet create` decisions select
+  it: install the CLI, start the server with JIT disabled, pull and load
+  both models, register a shared login job — seven operations run at the end
+  of `system_dependencies`, before you ever reach the `models` stage
+  (`iss_8a25cbf2`, commit `43c6ae5c5`; full detail and the pinned installer
+  version are in
+  [runbook 09](https://github.com/solet-public/macos-bizops/blob/main/plugins/github_midwife_plugin/knowledge_base/09_homebrew_install_troubleshooting_runbook.md)).
+  r39's own clean-machine validation run had LM Studio already present in
+  the base image, so it did not itself exercise this automation from a bare
+  machine on this exact release; the step-by-step walkthrough above is kept
+  as the documented fallback until that re-measurement happens. If you hit
+  `model_discovery_failed` with zero candidates, that means the automation
+  did not run (an older manager, or a selection that skipped it) — use the
+  walkthrough.
+- The inference qualification probe's outcome is now advisory rather than a
+  hard blocker: a `qwen3-14b` answer that is slow or fails the probe no
+  longer stops the install (`iss_2e36a62e`, commit `257df2cb8`, shipped in
+  r38). The probe result is recorded and surfaced through `solet doctor`
+  instead of failing `decision_qualification_failed` with zero permitted
+  candidates.
+- **Fixed in r39:** a cold first boot could crash-loop the embeddings plugin
+  against a not-yet-serving LM Studio and never register an active router
+  color inside the 120 second startup-readiness budget, because grammar
+  pre-warm, embedding qualification and knowledge-base rebuild all ran
+  before registration and competed with it. Cold-start work now runs as
+  deferred background work after the router registers (`iss_7f240dbe`,
+  commit `0551603bd`). Measured on the r39 clean-guest validation run: 1.145
+  seconds from LaunchAgent restart to active color.
+- **Fixed:** the LaunchAgent step (`install_launchagent`) no longer refuses
+  its own flow-declared inputs at the adapter gate (`adapter_protocol_error`
+  is closed, `iss_d0f9e899`, commit `3f8774534`).
+- A blocked `solet create` still cannot be abandoned or have its decisions
+  changed on the same name (`state_conflict`; no abandon command exists
+  yet). Use a new name; see *Reinstalling on a machine that had a solet*
+  below for the sharper, newly-discovered version of this same limitation on
+  a machine that already had a solet of that name. Fix in design.
 - Nothing yet makes LM Studio's server start at login; the solet's own
   LaunchAgent does, so after a reboot the solet is up before its models are.
-- Stages after `models` have had less clean-machine coverage than the ones
-  before it.
-- `doctor` reports probe checkpoint status from the probe implementations; its
-  declared expectation values are documentation and are not independently
-  evaluated.
+- `doctor` reports probe checkpoint status from the probe implementations;
+  its declared expectation values are documentation and are not
+  independently evaluated.
 - Solets created earlier by cloning the seed and running `bootstrap.py` are
   not adopted by the manager (`solet status` will not know about them). They
   keep working and keep updating through the seed-update runbook. Converging
   them onto the manager path is designed but not yet shipped.
+
+## Reinstalling on a machine that had a solet
+
+**This is not yet supported, and this release does not attempt to detect it
+for you.** `solet create <name>` on a machine that once held a solet of that
+name can silently do the wrong thing rather than failing cleanly:
+
+- If `~/.local/state/solet/transactions/<name>.json` exists, `solet create`
+  can resume that old transaction instead of starting fresh, so the new
+  manager installs the *old* seed's code under a name that looks like it is
+  running the release you just installed (`iss_50db7d43`).
+- If `~/.config/solet` still lists the name in its instance registry,
+  `create` stops with `state_conflict` and no way to proceed under that name
+  (`iss_6e520a72`).
+- If the login Keychain still has the old instance's vault entries, genesis
+  refuses to re-birth the name rather than overwrite them; the manager also
+  drops the failing command's own stderr, so the refusal can be hard to
+  diagnose from the JSON alone (`iss_74d70ef6`).
+
+Updating an existing solet to r39 is round two, not this release. Until it
+ships, treat any machine that has ever run `solet create <name>` (even a
+failed or abandoned attempt) as needing a clean sweep before you try that
+name again:
+
+```console
+launchctl bootout gui/$(id -u)/local.solet.<name> 2>/dev/null || true
+launchctl bootout gui/$(id -u)/local.solet.<name>.router 2>/dev/null || true
+rm -rf ~/.local/state/solet ~/Solets/<name> ~/.ananta ~/.solet ~/.config/solet
+security delete-generic-password -s "<name>-vault" 2>/dev/null || true
+# repeat delete-generic-password for every service starting with "<name>."
+# that `security dump-keychain | grep <name>` still lists
+```
+
+Read back that each path and Keychain item is actually gone (`launchctl
+print`, `find`, `security dump-keychain`) before running `solet create
+<name>` again — do not assume the removal succeeded silently. An existing
+solet you do not want to touch, created from an earlier seed with
+`bootstrap.py`, is unaffected by any of this and keeps updating through the
+seed-update runbook; the manager still does not adopt it.
 
 ## Reporting problems
 
