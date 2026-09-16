@@ -3,10 +3,10 @@ class Solet < Formula
 
   desc "Create and operate local Solet instances"
   homepage "https://solet.ai"
-  url "https://github.com/solet-public/homebrew-tap/releases/download/manager-v0.1.0-r40/solet-0.1.0.tar.gz"
-  sha256 "91bc986c72ca4eaa4c367fda83190ee2450591eaa2f70c04f1ca58ac49029ed6"
+  url "https://github.com/solet-public/homebrew-tap/releases/download/manager-v0.1.0-r41/solet-0.1.0.tar.gz"
+  sha256 "a8bd328076f79559401cd29b0ebc88f13de1a2af185a83b881625cf0e05e24bb"
   license "Apache-2.0"
-  revision 26
+  revision 27
   depends_on "git"
   depends_on "python@3.13"
 
@@ -50,19 +50,24 @@ class Solet < Formula
       "plugins/github_midwife_plugin/knowledge_base/setup_journal.schema.json",
       "plugins/github_midwife_plugin/knowledge_base/setup_adapter_envelope.schema.json",
       "plugins/github_midwife_plugin/knowledge_base/permissions_manifest.json",
+      "plugins/github_midwife_plugin/knowledge_base/existing_install_flow.schema.json",
     ]
     # Homebrew's build sandbox forbids reading the tap checkout while a Formula
     # installs. Render the same reviewed lock bytes into the Formula so the
     # default lock remains non-circular without crossing that sandbox boundary.
     (libexec/"share"/"solet"/"seed.lock.json").write <<~JSON
       {
-        "schema_version": 1,
+        "schema_version": 3,
+        "channel_id": "stable",
         "repository": "https://github.com/solet-public/macos-bizops.git",
-        "release_tag": "release-2026-09-15-da73ac6cc1e4",
-        "commit": "9b962e88a7c2720a888411f8785daf6c6bb0b9c9",
-        "tree_hash": "7c631a388eb532320fac8fb5e2a41ac35e0244a6",
-        "archive_sha256": "91bc986c72ca4eaa4c367fda83190ee2450591eaa2f70c04f1ca58ac49029ed6",
-        "profile": "macos-bizops"
+        "release_tag": "release-2026-09-16-5c5aec1965be",
+        "commit": "fa2fd84cd35aa686d9e3f62bf320be7b03fb918f",
+        "tree_hash": "412a332b2f4d450dcab3ffa9359c314c889fb706",
+        "archive_sha256": "a8bd328076f79559401cd29b0ebc88f13de1a2af185a83b881625cf0e05e24bb",
+        "profile": "macos-bizops",
+        "provenance": {"bundle_name":"macos-bizops","manifest_sha256":"6568475bc5c6446aaed7a34bca754342367751c20c9ccde7dd3158697224714b","origin_id":"31bfa93c-fe20-4988-b019-f8186684e88e","platform":"local","provenance_sha256":"e9d7067b0353ae166ee25f63731bf5c328dc9a1917f7ad5ba47944703239723f","schema_version":1,"seed_id":"1bc2c884-a3d1-5b29-ac87-ffa0ac229033","source_commit":"5c5aec1965befd824b71ad66458ee70025c2d2a7","source_date":"2026-09-16T08:14:05-07:00"},
+        "existing_install_contract": {"bundle_digest":"sha256:3c11ed6160768640de96b3d60feebff4fe78386d2e4c4fdd4df075da15dd7801","flow_id":"existing-install","flow_schema_version":1},
+        "allowed_repository_migrations": []
       }
     JSON
     # This installed receipt distinguishes a worktree-payload experiment from
@@ -73,7 +78,7 @@ class Solet < Formula
       {
         "schema_version": 1,
         "mode": "release",
-        "source_commit": "da73ac6cc1e4106864293faa766b301d91c750ca"
+        "source_commit": "5c5aec1965befd824b71ad66458ee70025c2d2a7"
       }
     JSON
     # `install_symlink` records a path, not bytes — safe for a source build,
@@ -83,6 +88,7 @@ class Solet < Formula
     # that only exists on the machine that built the bottle.
     (libexec/"share"/"solet").install_symlink Pathname(__dir__).parent/"solet_cli"/"homebrew"/"seeds" => "seeds"
     bin.install_symlink libexec/"bin"/"solet"
+    bin.install_symlink libexec/"bin"/"solet-manager"
   end
 
   def caveats
