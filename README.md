@@ -6,18 +6,23 @@ your own Mac, with its own PostgreSQL schema, memories, knowledge bases and
 plugins. This tap installs the **Solet Manager**, the command that creates and
 operates solet instances from the published seed.
 
-**Status (2026-09-15): r40 is published.** `brew install
-solet-public/tap/solet` installs manager release `manager-v0.1.0-r40`
-(`solet 0.1.0_26`), pinned to seed release
-`release-2026-09-15-da73ac6cc1e4` of `solet-public/macos-bizops` at source
-pin `da73ac6cc1e4106864293faa766b301d91c750ca`. r40 reports the actionable
-genesis diagnostic for an interrupted or inconsistent setup journal rather
-than collapsing it into `corrupt_state`, and verifies the persistent
-LaunchAgent plist as well as the live launchd service. The fresh-install path
-is validated end to end on a clean 24 GB virtual machine through `solet
-doctor` (24/24 required checks) and target-local bridge health. Read the
-*Known gaps* section below, and *Reinstalling on a machine that had a solet*
-if this is not the first solet you have created on this Mac.
+**Status (2026-09-19): r43 is published.** `brew install
+solet-public/tap/solet` installs manager release `manager-v0.1.0-r43`
+(`solet 0.1.0_28`), pinned to seed release
+`release-2026-09-19-ef2ea8fce869` of `solet-public/macos-bizops` at source
+pin `ef2ea8fce86918234d3e4281050b64c7efcb3d8e`. r43 ships existing-Solet
+import and update -- inspecting, classifying, and importing a pre-manager
+solet, and updating an already-manager-created solet to a newer seed release
+in place -- plus ten install-blocker fixes carried from r41/r42's own
+validation attempts. The fresh-install path is validated end to end on a
+clean 50 GB virtual machine through `solet doctor` (24/24 required checks)
+and the target-local health probe. **The update-of-an-existing-solet path
+has not yet been re-measured on a clean guest by this release** -- it is
+extensively covered by unit and fixture-based tests, but a live install-
+then-update walk is a fast-follow. Read the *Known gaps* section below, and
+*Reinstalling on a machine that had a solet* if this is not the first solet
+you have created on this Mac -- that section's guidance is still current
+practice until the live update walk is published.
 
 ## What you need
 
@@ -310,6 +315,12 @@ integration and the `<name>` command-line client.
 
 Stated here so nobody discovers them the hard way:
 
+- **Ships in r43, not yet re-measured on a clean guest:** existing-Solet
+  import and update. The code path (inspection, classification, import,
+  update CLI, update runtime/cutover, dual-contract doctor) is extensively
+  covered by unit and fixture-based tests, but a live install-then-update
+  walk on a clean guest is a fast-follow to this release, not included in
+  r43's own clean-guest validation ladder (which proved fresh install only).
 - **Largely fixed, not yet reflected in the walkthrough above.** The manager
   now provisions LM Studio itself when your `solet create` decisions select
   it: install the CLI, start the server with JIT disabled, pull and load
@@ -391,10 +402,12 @@ name can silently do the wrong thing rather than failing cleanly:
   it does not delete a prior instance's Keychain material for you
   (`iss_74d70ef6`).
 
-Updating an existing solet to r40 is round two, not this release. Until it
-ships, treat any machine that has ever run `solet create <name>` (even a
-failed or abandoned attempt) as needing a clean sweep before you try that
-name again:
+r43 ships the update-of-an-existing-solet code path (see the status line
+above), but this release has not yet re-measured a live install-then-update
+walk on a clean guest -- that re-measurement is a fast-follow, not this
+release. Until it is published, treat any machine that has ever run `solet
+create <name>` (even a failed or abandoned attempt) as needing a clean sweep
+before you try that name again:
 
 ```console
 launchctl bootout gui/$(id -u)/local.solet.<name> 2>/dev/null || true
