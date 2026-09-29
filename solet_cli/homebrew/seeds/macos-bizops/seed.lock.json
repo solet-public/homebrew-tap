@@ -2,12 +2,12 @@
   "schema_version": 3,
   "channel_id": "stable",
   "repository": "https://github.com/solet-public/macos-bizops.git",
-  "release_tag": "release-2026-09-29-d81e014adce8",
-  "commit": "d81e014adce8ed4b4258db35a4f46339431ea158",
-  "tree_hash": "f95d890e2bb36c889c9e3ea0e4b3976c50336769",
-  "archive_sha256": "1162cab738e2941cb0d95b8c9bd38cc355a57aaa02ea4e2e98f89f0957274a5b",
+  "release_tag": "release-2026-09-29-8b3fe23d447e",
+  "commit": "8b3fe23d447e384541bd5a18a7d7090fa41ae5a6",
+  "tree_hash": "cca735f8bc96613146587f17fddc03062fd52006",
+  "archive_sha256": "d8423082d5d0d4006b1e73d986fc885b1b26b1b98523c060b1f127fd35e44bbb",
   "profile": "macos-bizops",
-  "provenance": {"bundle_name":"macos-bizops","manifest_sha256":"fbcd04c3abf4af903aebe0cb046ce15c455e1386486773accf9680aa4720f75a","origin_id":"31bfa93c-fe20-4988-b019-f8186684e88e","platform":"local","provenance_sha256":"b05b2f4afdbcdb98c76978dc45beb1e42abd5e417e1734ea4ddc39c1b6755560","schema_version":1,"seed_id":"50837fd9-78d7-5480-aecf-9a03bcafb586","source_commit":"23fa8c996eba9d22f3e306d6d5759ebe4c461a84","source_date":"2026-09-28T17:03:43-07:00"},
-  "existing_install_contract": {"bundle_digest":"sha256:ad842553ad7e51f51569acacafb1aed79c9550ece2f53f7a406c0d5c8585403a","flow_id":"existing-install","flow_schema_version":1},
+  "provenance": {"bundle_name":"macos-bizops","manifest_sha256":"fbcd04c3abf4af903aebe0cb046ce15c455e1386486773accf9680aa4720f75a","origin_id":"31bfa93c-fe20-4988-b019-f8186684e88e","platform":"local","provenance_sha256":"b81551a3fecc4f47e1d49dd0a0b8959c363f5acbe2ac0828927f50722698e2d8","schema_version":1,"seed_id":"b3bd36fd-28b7-5b8c-98e5-05096d2b7748","source_commit":"5388bffec397948167b3b2170f7c9972e9eb39c9","source_date":"2026-09-28T23:12:01-07:00"},
+  "existing_install_contract": {"bundle_digest":"sha256:92eb86dc9d71fa50e09534da084eb2fbdb5e15b1c63550670979aa49c17f7f54","flow_id":"existing-install","flow_schema_version":1},
   "allowed_repository_migrations": []
 }
